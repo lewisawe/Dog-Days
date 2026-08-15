@@ -6,6 +6,7 @@
 __pycache__/
 *.pyc
 .snowflake/
+environment.yml.sis
 
 # Non-code docs: planning, challenge brief, and submission drafts.
 # README.md is kept. Listed by name so requirements.txt is NOT excluded.

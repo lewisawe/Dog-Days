@@ -32,8 +32,7 @@ streamlit_app.py      the app (runs in Streamlit-in-Snowflake or locally)
 tools/
   verify_model.py         pure-Python check of the model numbers
   build_local_duckdb.py   local DuckDB mirror for offline development
-requirements.txt      local dependencies
-environment.yml       Streamlit-in-Snowflake package manifest
+requirements.txt      local dependencies (also used by Streamlit Community Cloud)
 ```
 
 ## Run it

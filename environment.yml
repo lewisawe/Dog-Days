@@ -1,8 +1,0 @@
-# Streamlit-in-Snowflake package manifest.
-# In the SiS editor these are selected from the Anaconda Snowflake channel.
-# streamlit, pandas and snowflake-snowpark-python are provided by the SiS runtime.
-name: sf_env
-channels:
-  - snowflake
-dependencies:
-  - altair
