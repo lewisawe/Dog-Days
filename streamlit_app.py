@@ -383,9 +383,9 @@ with tab_overview:
                  .mark_rule(color=DANGER, size=1).encode(x="t:Q"))
     st.altair_chart(bars + median_rule + tail_rule, use_container_width=True)
     st.markdown(
-        f"Dashed line marks the median ({money(row['median_cost'])}). "
-        f"Everything in :red[**red**] is the tail past {money(TAIL)}: "
-        f"**{tail_pct * 100:.0f}% of {primary}s land there.**"
+        (f"Dashed line marks the median ({money(row['median_cost'])}). "
+         f"Everything in :red[**red**] is the tail past {money(TAIL)}: "
+         f"**{tail_pct * 100:.0f}% of {primary}s land there.**").replace("$", "\\$")
     )
     st.divider()
 
@@ -594,8 +594,8 @@ with tab_scenario:
         vc = MUTED
     if adopt:
         vtxt += " Acquisition is set to **adopt**, so the breed purchase price is swapped for a ~$200 fee."
-    # Native colored callout (renders markdown reliably; no injected HTML).
-    {SAFE: st.success, AMBER: st.warning, MUTED: st.info}.get(vc, st.info)(vtxt)
+    # Native colored callout (renders markdown reliably; escape $ so it isn't read as LaTeX).
+    {SAFE: st.success, AMBER: st.warning, MUTED: st.info}.get(vc, st.info)(vtxt.replace("$", "\\$"))
     st.caption("A simplified insurance model: flat premium already in the baseline, a yearly deductible, "
                "then coinsurance on the rest. Real policies vary. This is for comparison, not a quote.")
 
