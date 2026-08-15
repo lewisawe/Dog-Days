@@ -48,6 +48,32 @@ def _load_env_file():
 _load_env_file()
 
 
+def _load_st_secrets():
+    """Bridge Streamlit secrets into os.environ so the connector path works on
+    Streamlit Community Cloud, where credentials come from st.secrets (not env
+    vars). Accepts a nested [snowflake] section or flat SNOWFLAKE_* keys. No-ops
+    locally when no secrets file exists, and in Streamlit-in-Snowflake."""
+    try:
+        secrets = st.secrets
+    except Exception:
+        return
+    try:
+        if "snowflake" in secrets:
+            for k, v in secrets["snowflake"].items():
+                os.environ.setdefault(f"SNOWFLAKE_{k.upper()}", str(v))
+    except Exception:
+        pass
+    try:
+        for k in secrets:
+            if str(k).upper().startswith("SNOWFLAKE_"):
+                os.environ.setdefault(str(k).upper(), str(secrets[k]))
+    except Exception:
+        pass
+
+
+_load_st_secrets()
+
+
 # ---------------------------------------------------------------------------
 # Data access: one helper that works in Snowflake-in-Streamlit and locally.
 # ---------------------------------------------------------------------------

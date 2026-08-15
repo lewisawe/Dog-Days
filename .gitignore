@@ -1,5 +1,7 @@
 # Secrets and local artifacts
 .env
+.secrets.local
+.secrets*
 *.duckdb
 __pycache__/
 *.pyc
