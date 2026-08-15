@@ -1,0 +1,112 @@
+breed_name,condition_name,lifetime_prob
+Labrador Retriever,Hip dysplasia,0.2
+Labrador Retriever,Elbow dysplasia,0.12
+Labrador Retriever,Cruciate ligament rupture,0.15
+Labrador Retriever,Osteoarthritis,0.45
+Labrador Retriever,Cancer,0.31
+French Bulldog,Brachycephalic airway (BOAS),0.45
+French Bulldog,Intervertebral disc disease,0.2
+French Bulldog,Atopic dermatitis,0.3
+French Bulldog,Hip dysplasia,0.14
+French Bulldog,Patellar luxation,0.1
+Golden Retriever,Cancer,0.38
+Golden Retriever,Hip dysplasia,0.18
+Golden Retriever,Elbow dysplasia,0.1
+Golden Retriever,Atopic dermatitis,0.2
+Golden Retriever,Osteoarthritis,0.4
+German Shepherd,Hip dysplasia,0.19
+German Shepherd,Elbow dysplasia,0.12
+German Shepherd,Cruciate ligament rupture,0.12
+German Shepherd,Osteoarthritis,0.42
+German Shepherd,Cancer,0.25
+Standard Poodle,Hip dysplasia,0.1
+Standard Poodle,Cancer,0.24
+Standard Poodle,Cushing's disease,0.08
+Standard Poodle,Eye disease (PRA/cataracts),0.1
+English Bulldog,Brachycephalic airway (BOAS),0.5
+English Bulldog,Hip dysplasia,0.3
+English Bulldog,Atopic dermatitis,0.35
+English Bulldog,Cruciate ligament rupture,0.12
+Beagle,Epilepsy,0.1
+Beagle,Hypothyroidism,0.1
+Beagle,Atopic dermatitis,0.15
+Beagle,Osteoarthritis,0.3
+Rottweiler,Cruciate ligament rupture,0.18
+Rottweiler,Hip dysplasia,0.2
+Rottweiler,Cancer,0.35
+Rottweiler,Osteoarthritis,0.42
+Dachshund,Intervertebral disc disease,0.25
+Dachshund,Patellar luxation,0.08
+Dachshund,Cushing's disease,0.08
+Dachshund,Osteoarthritis,0.35
+German Shorthaired Pointer,Hip dysplasia,0.1
+German Shorthaired Pointer,Cancer,0.22
+German Shorthaired Pointer,Gastric dilatation-volvulus,0.1
+Pembroke Welsh Corgi,Intervertebral disc disease,0.12
+Pembroke Welsh Corgi,Hip dysplasia,0.1
+Pembroke Welsh Corgi,Osteoarthritis,0.38
+Australian Shepherd,Eye disease (PRA/cataracts),0.12
+Australian Shepherd,Epilepsy,0.08
+Australian Shepherd,Hip dysplasia,0.1
+Yorkshire Terrier,Patellar luxation,0.15
+Yorkshire Terrier,Mitral valve disease,0.2
+Yorkshire Terrier,Eye disease (PRA/cataracts),0.08
+Boxer,Cancer,0.38
+Boxer,Dilated cardiomyopathy,0.15
+Boxer,Hip dysplasia,0.12
+Boxer,Osteoarthritis,0.35
+Cavalier King Charles Spaniel,Mitral valve disease,0.5
+Cavalier King Charles Spaniel,Eye disease (PRA/cataracts),0.1
+Cavalier King Charles Spaniel,Patellar luxation,0.1
+Great Dane,Gastric dilatation-volvulus,0.25
+Great Dane,Dilated cardiomyopathy,0.18
+Great Dane,Hip dysplasia,0.15
+Great Dane,Osteoarthritis,0.4
+Doberman Pinscher,Dilated cardiomyopathy,0.45
+Doberman Pinscher,Cancer,0.25
+Doberman Pinscher,Hip dysplasia,0.1
+Shih Tzu,Brachycephalic airway (BOAS),0.25
+Shih Tzu,Eye disease (PRA/cataracts),0.15
+Shih Tzu,Patellar luxation,0.1
+Shih Tzu,Atopic dermatitis,0.15
+Border Collie,Hip dysplasia,0.1
+Border Collie,Epilepsy,0.08
+Border Collie,Eye disease (PRA/cataracts),0.1
+Border Collie,Osteoarthritis,0.3
+Siberian Husky,Eye disease (PRA/cataracts),0.12
+Siberian Husky,Hip dysplasia,0.08
+Siberian Husky,Atopic dermatitis,0.12
+Bernese Mountain Dog,Cancer,0.45
+Bernese Mountain Dog,Hip dysplasia,0.2
+Bernese Mountain Dog,Elbow dysplasia,0.15
+Bernese Mountain Dog,Osteoarthritis,0.45
+Chihuahua,Patellar luxation,0.18
+Chihuahua,Mitral valve disease,0.2
+Chihuahua,Eye disease (PRA/cataracts),0.08
+Pug,Brachycephalic airway (BOAS),0.45
+Pug,Eye disease (PRA/cataracts),0.15
+Pug,Atopic dermatitis,0.25
+Pug,Hip dysplasia,0.12
+Cocker Spaniel,Eye disease (PRA/cataracts),0.15
+Cocker Spaniel,Atopic dermatitis,0.2
+Cocker Spaniel,Mitral valve disease,0.15
+Cocker Spaniel,Hypothyroidism,0.1
+Miniature Schnauzer,Cushing's disease,0.1
+Miniature Schnauzer,Cancer,0.2
+Miniature Schnauzer,Eye disease (PRA/cataracts),0.1
+Pomeranian,Patellar luxation,0.15
+Pomeranian,Mitral valve disease,0.15
+Pomeranian,Eye disease (PRA/cataracts),0.08
+Boston Terrier,Brachycephalic airway (BOAS),0.3
+Boston Terrier,Patellar luxation,0.12
+Boston Terrier,Eye disease (PRA/cataracts),0.15
+Shiba Inu,Patellar luxation,0.1
+Shiba Inu,Atopic dermatitis,0.2
+Shiba Inu,Eye disease (PRA/cataracts),0.08
+Mastiff,Hip dysplasia,0.22
+Mastiff,Gastric dilatation-volvulus,0.18
+Mastiff,Cancer,0.3
+Mastiff,Osteoarthritis,0.42
+Jack Russell Terrier,Patellar luxation,0.1
+Jack Russell Terrier,Eye disease (PRA/cataracts),0.1
+Jack Russell Terrier,Osteoarthritis,0.28

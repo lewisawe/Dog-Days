@@ -1,0 +1,31 @@
+breed_name,size,lifespan_median,lifespan_sd,purchase_price,annual_food,annual_routine_vet,annual_preventatives,annual_insurance,puppy_setup,lifespan_source
+Labrador Retriever,large,13.1,2.2,1200,900,460,440,760,550,rvc2024
+French Bulldog,small,9.8,2.4,3500,420,350,300,480,550,rvc2024
+Golden Retriever,large,12.5,2.3,1500,900,460,440,760,550,published
+German Shepherd,large,11.3,2.4,1500,900,460,440,760,550,published
+Standard Poodle,large,12.9,2.2,1800,900,460,440,760,550,published
+English Bulldog,medium,9.8,2.3,2800,620,400,360,600,550,rvc2024
+Beagle,small,12.7,2.0,900,420,350,300,480,550,published
+Rottweiler,large,10.0,2.3,1600,900,460,440,760,550,published
+Dachshund,small,12.2,2.1,1200,420,350,300,480,550,rvc2024
+German Shorthaired Pointer,large,12.5,2.1,1200,900,460,440,760,550,published
+Pembroke Welsh Corgi,medium,12.3,2.0,1800,620,400,360,600,550,published
+Australian Shepherd,medium,13.0,2.0,1200,620,400,360,600,550,published
+Yorkshire Terrier,small,12.6,2.1,1500,420,350,300,480,550,published
+Boxer,large,10.4,2.3,1400,900,460,440,760,550,published
+Cavalier King Charles Spaniel,small,11.3,2.3,2500,420,350,300,480,550,published
+Great Dane,giant,9.0,2.0,1800,1300,520,540,900,550,rvc2024
+Doberman Pinscher,large,10.5,2.2,1800,900,460,440,760,550,published
+Shih Tzu,small,12.8,2.1,1000,420,350,300,480,550,published
+Border Collie,medium,13.1,2.0,1000,620,400,360,600,550,rvc2024
+Siberian Husky,medium,12.6,2.0,1200,620,400,360,600,550,published
+Bernese Mountain Dog,giant,8.4,1.9,2000,1300,520,540,900,550,published
+Chihuahua,small,13.5,2.2,800,420,350,300,480,550,published
+Pug,small,11.6,2.3,1800,420,350,300,480,550,rvc2024
+Cocker Spaniel,medium,11.3,2.2,1200,620,400,360,600,550,published
+Miniature Schnauzer,small,12.8,2.0,1500,420,350,300,480,550,published
+Pomeranian,small,12.4,2.1,1400,420,350,300,480,550,published
+Boston Terrier,small,11.7,2.2,1200,420,350,300,480,550,published
+Shiba Inu,small,13.0,2.0,1800,420,350,300,480,550,published
+Mastiff,giant,9.0,1.9,1800,1300,520,540,900,550,rvc2024
+Jack Russell Terrier,small,12.7,2.0,900,420,350,300,480,550,rvc2024

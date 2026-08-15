@@ -1,0 +1,14 @@
+# Secrets and local artifacts
+.env
+*.duckdb
+__pycache__/
+*.pyc
+.snowflake/
+
+# Non-code docs: planning, challenge brief, and submission drafts.
+# README.md is kept. Listed by name so requirements.txt is NOT excluded.
+challenge.txt
+DEMO_SCRIPT.md
+VIDEO_SCRIPT.md
+SUBMISSION.md
+devToSubmission.md

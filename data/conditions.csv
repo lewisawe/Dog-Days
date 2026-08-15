@@ -1,0 +1,17 @@
+condition_name,mode,avg_cost,cost_sd,annual_cost,onset_age,description
+Hip dysplasia,onetime,5200,1500,0,4,Malformed hip joint; often needs surgery (FHO/THR).
+Elbow dysplasia,onetime,3000,1000,0,2,Developmental elbow disease; arthroscopy or surgery.
+Cruciate ligament rupture,onetime,4000,1200,0,6,CCL tear needing TPLO/TTA surgery.
+Gastric dilatation-volvulus,onetime,5000,1500,0,7,"Bloat; emergency surgery, life-threatening."
+Brachycephalic airway (BOAS),onetime,3500,1000,0,2,Airway surgery for flat-faced breathing problems.
+Intervertebral disc disease,onetime,6000,2000,0,5,IVDD; spinal surgery for disc herniation.
+Dilated cardiomyopathy,recurring,1500,0,1200,6,Progressive heart muscle disease; lifelong meds.
+Mitral valve disease,recurring,1000,0,900,8,Degenerative heart valve; lifelong management.
+Cancer,onetime,6000,3000,0,6,Major cancer treatment (surgery/chemo); mostly mid-to-late life.
+Atopic dermatitis,recurring,400,0,800,2,Chronic allergies; lifelong meds and vet visits.
+Osteoarthritis,recurring,300,0,600,8,Age-related joint disease; onset late in life.
+Hypothyroidism,recurring,400,0,500,5,Lifelong thyroid medication.
+Epilepsy,recurring,600,0,1200,3,Seizure disorder; lifelong medication.
+Eye disease (PRA/cataracts),onetime,3000,1000,0,7,Cataract surgery or progressive vision loss.
+Patellar luxation,onetime,2500,800,0,3,Kneecap dislocation; surgical correction.
+Cushing's disease,recurring,600,0,1500,8,Adrenal disorder; lifelong meds and monitoring.
