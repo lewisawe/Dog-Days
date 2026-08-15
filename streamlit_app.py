@@ -389,9 +389,133 @@ with tab_overview:
     )
     st.divider()
 
-    # Roll a life
+    # ---- shared helper: render one simulated life as a timeline card ----
+    def life_card(life_df, heading, tier_label="", show_verdict=False):
+        head = life_df.iloc[0]
+        years = int(head["lifespan_years"])
+        total = float(head["lifetime_cost"])
+        health = float(head["health_cost"])
+        events = life_df.dropna(subset=["condition_name"])
+        if events.empty:
+            rows_html = (f'<div class="wtdac-ev"><span class="age">Age 0–{years}</span> '
+                         f'No major health problems. Just food, checkups, and love.</div>')
+        else:
+            rows_html = ""
+            for _, e in events.iterrows():
+                onset = int(e["onset_age"])
+                when = f"from age {onset}" if e["mode"] == "recurring" else f"age {onset}"
+                rows_html += (f'<div class="wtdac-ev"><span class="age">{when}</span> '
+                              f'{e["condition_name"]}<span class="amt">{money(e["event_cost"])}</span></div>')
+        accent = DANGER if total > float(row["p90_cost"]) else (SAFE if total < float(row["p10_cost"]) else INK)
+        tier_html = f'<div class="wtdac-label" style="margin-bottom:2px">{tier_label}</div>' if tier_label else ""
+        vhtml = ""
+        if show_verdict:
+            diff = total - float(row["median_cost"])
+            vcolor = DANGER if diff > 0 else SAFE
+            vtxt = (f"{money(abs(diff))} above median" if diff > 0 else f"{money(abs(diff))} below median")
+            vhtml = f'&nbsp;<span style="color:{vcolor};font-weight:700">({vtxt})</span>'
+        return (
+            f'<div class="wtdac-story" style="border-left-color:{accent}">{tier_html}'
+            f'<h4>{heading}</h4>'
+            f'<div class="wtdac-sub">Health costs: {money(health)} of the total.</div>'
+            f'<div style="margin-top:10px">{rows_html}</div>'
+            f'<div class="wtdac-total">Total: {money(total)}{vhtml}</div></div>'
+        )
+
+    # ---- Three lives: lucky (p5), median (p50), nightmare (p95) ----
+    st.divider()
+    st.subheader("Three lives: the lucky, the median, the nightmare")
+    st.caption("Three real simulated dogs of this breed, at the 5th, 50th, and 95th percentile of lifetime cost. "
+               "Same breed, wildly different bills, and the actual life that produced each one.")
+
+    @st.cache_data(ttl=600)
+    def three_lives(breed):
+        b = sql_str(breed)
+        ids = q(f"""
+            WITH ranked AS (
+                SELECT sim_id, lifetime_cost,
+                       ROW_NUMBER() OVER (ORDER BY lifetime_cost) AS rn,
+                       COUNT(*) OVER () AS n
+                FROM {DB}.sim_results WHERE breed_name = {b})
+            SELECT 'Lucky · p5' AS tier, 1 AS ord, sim_id FROM ranked WHERE rn = CAST(0.05 * n AS INT)
+            UNION ALL SELECT 'Median · p50', 2, sim_id FROM ranked WHERE rn = CAST(0.50 * n AS INT)
+            UNION ALL SELECT 'Nightmare · p95', 3, sim_id FROM ranked WHERE rn = CAST(0.95 * n AS INT)
+        """).sort_values("ord")
+        id_list = ", ".join(str(int(s)) for s in ids["sim_id"])
+        tl = q(f"""
+            SELECT sr.sim_id, sr.lifespan_years, sr.baseline_cost, sr.health_cost, sr.lifetime_cost,
+                   scc.condition_name, scc.cost AS event_cost, c.onset_age, c.mode
+            FROM {DB}.sim_results sr
+            LEFT JOIN {DB}.sim_condition_costs scc
+                   ON scc.sim_id = sr.sim_id AND scc.breed_name = sr.breed_name AND scc.incurred = 1
+            LEFT JOIN {DB}.conditions c ON c.condition_name = scc.condition_name
+            WHERE sr.breed_name = {b} AND sr.sim_id IN ({id_list})
+            ORDER BY sr.sim_id, c.onset_age NULLS LAST
+        """)
+        return ids, tl
+
+    with st.spinner("Pulling three lives from Snowflake…"):
+        ids3, tl3 = three_lives(primary)
+    cols3 = st.columns(3)
+    for colx, (_, r3) in zip(cols3, ids3.iterrows()):
+        sid = int(r3["sim_id"])
+        life_df = tl3[tl3["sim_id"] == sid]
+        yrs = int(life_df.iloc[0]["lifespan_years"])
+        colx.markdown(life_card(life_df, f"{emoji} Lived {yrs} years", tier_label=r3["tier"]),
+                      unsafe_allow_html=True)
+
+    # ---- Can you afford this dog? A budget stress test ----
+    st.divider()
+    st.subheader("Can you actually afford this dog?")
+    st.caption("Enter your budget and Snowflake stress-tests it against every simulated life's worst year.")
+    ac1, ac2 = st.columns(2)
+    monthly = int(ac1.number_input("Set aside per month ($)", min_value=0, max_value=1000, value=75, step=25,
+                                   help="How much you can save toward the dog each month."))
+    efund = int(ac2.number_input("Emergency fund on hand ($)", min_value=0, max_value=20000, value=1500, step=500,
+                                 help="Cash you could put toward a surprise vet bill today."))
+
+    @st.cache_data(ttl=300)
+    def affordability(breed, monthly, efund):
+        b = sql_str(breed)
+        cushion = efund + monthly * 12
+        r = q(f"""
+            WITH per_sim AS (
+                SELECT d.sim_id, d.annual_baseline,
+                       MAX(CASE WHEN c.mode = 'onetime'  AND cc.incurred = 1 THEN cc.cost ELSE 0 END) AS max_onetime,
+                       SUM(CASE WHEN c.mode = 'recurring' AND cc.incurred = 1 THEN c.annual_cost ELSE 0 END) AS recurring_annual
+                FROM {DB}.sim_dogs d
+                LEFT JOIN {DB}.sim_condition_costs cc ON cc.sim_id = d.sim_id AND cc.breed_name = d.breed_name
+                LEFT JOIN {DB}.conditions c ON c.condition_name = cc.condition_name
+                WHERE d.breed_name = {b}
+                GROUP BY d.sim_id, d.annual_baseline
+            )
+            SELECT AVG(CASE WHEN annual_baseline + max_onetime + recurring_annual > {cushion} THEN 1 ELSE 0 END) AS p_over,
+                   MEDIAN(annual_baseline + max_onetime + recurring_annual) AS median_worst,
+                   MAX(annual_baseline + max_onetime + recurring_annual)    AS max_worst
+            FROM per_sim
+        """)
+        return r.iloc[0]
+
+    with st.spinner("Stress-testing your budget across 10,000 lives in Snowflake…"):
+        aff = affordability(primary, monthly, efund)
+    p_over = float(aff["p_over"])
+    cushion = efund + monthly * 12
+    pct_color = "green" if p_over < 0.10 else ("orange" if p_over < 0.25 else "red")
+    st.markdown(f"### :{pct_color}[{p_over * 100:.0f}%] chance of a year you can't cover")
+    st.markdown(
+        (f"With **{money(monthly)}/month** saved and a **{money(efund)}** emergency fund "
+         f"(a **{money(cushion)}** cushion for one bad year), there is a **{p_over * 100:.0f}%** chance "
+         f"a {primary} hands you a year whose bills you cannot cover. Its median worst year is "
+         f"**{money(aff['median_worst'])}**, and the worst simulated year reached **{money(aff['max_worst'])}**.")
+        .replace("$", "\\$")
+    )
+    st.caption("Worst-year outlay = that year's routine care + the single biggest one-time bill + ongoing condition "
+               "costs. Conservative by design: it assumes the big bill and the chronic costs can land in the same year.")
+
+    # ---- Roll a life (random) ----
+    st.divider()
     st.subheader("🎲 Roll a life")
-    st.caption("Pull one random simulated dog from the 10,000 in Snowflake and see how its life played out.")
+    st.caption("Or pull one random simulated dog from the 10,000 in Snowflake.")
     if "roll" not in st.session_state:
         st.session_state.roll = 0
     if st.button(f"Roll a random {primary} life", type="primary"):
@@ -417,39 +541,11 @@ with tab_overview:
         """)
 
     if st.session_state.roll > 0:
-        life = roll_life(primary, st.session_state.roll)
-        head = life.iloc[0]
-        years = int(head["lifespan_years"])
-        total = float(head["lifetime_cost"])
-        health = float(head["health_cost"])
-        diff = total - float(row["median_cost"])
-        events = life.dropna(subset=["condition_name"])
-        if events.empty:
-            rows_html = (f'<div class="wtdac-ev"><span class="age">Age 0–{years}</span> '
-                         f'Sailed through with no major health problems. Just food, checkups, and love.</div>')
-        else:
-            rows_html = ""
-            for _, e in events.iterrows():
-                onset = int(e["onset_age"])
-                when = f"from age {onset}" if e["mode"] == "recurring" else f"age {onset}"
-                rows_html += (f'<div class="wtdac-ev"><span class="age">{when}</span> '
-                              f'{e["condition_name"]}<span class="amt">{money(e["event_cost"])}</span></div>')
-        vcolor = DANGER if diff > 0 else SAFE
-        verdict = (f"{money(abs(diff))} <b>above</b> the median" if diff > 0
-                   else f"{money(abs(diff))} <b>below</b> the median")
-        accent = DANGER if total > float(row["p90_cost"]) else (SAFE if total < float(row["p10_cost"]) else INK)
-        st.markdown(
-            f"""
-            <div class="wtdac-story" style="border-left-color:{accent}">
-              <h4>{emoji} This {primary} lived {years} years.</h4>
-              <div class="wtdac-sub">Health costs: {money(health)} of the total.</div>
-              <div style="margin-top:12px">{rows_html}</div>
-              <div class="wtdac-total">Lifetime total: {money(total)}
-                &nbsp;<span style="color:{vcolor};font-weight:700">({verdict})</span></div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+        with st.spinner("Pulling a random dog from Snowflake…"):
+            life = roll_life(primary, st.session_state.roll)
+        yrs = int(life.iloc[0]["lifespan_years"])
+        st.markdown(life_card(life, f"{emoji} This {primary} lived {yrs} years.", show_verdict=True),
+                    unsafe_allow_html=True)
     else:
         st.info("Hit the button to meet a dog.")
 
@@ -649,6 +745,23 @@ with st.expander("How this works: the Monte Carlo runs in Snowflake"):
         language="sql",
     )
     st.caption("Full SQL in sql/03_simulation.sql. Data sources and method in data/SOURCES.md.")
+
+with st.expander("About the model and its limits"):
+    st.markdown(
+        "- **Lifespans** use the Royal Veterinary College VetCompass 2024 medians where a breed "
+        "is covered, and commonly published breed figures otherwise.\n"
+        "- **Costs** are US planning estimates from insurer claims data and vet guides, drawn around "
+        "documented averages.\n"
+        "- **Condition risk** per breed comes from published predisposition data, rounded to "
+        "planning-grade probabilities.\n"
+        "- **Simplifications, on purpose:** yearly care is modeled roughly flat (real senior years "
+        "cost more), each condition is rolled independently, and a dog's lifespan is drawn "
+        "independently of the illnesses it develops.\n"
+        "- **The insurance and affordability views** are simplified comparison models, not quotes. "
+        "The worst-year figure conservatively assumes a big one-time bill and chronic costs can "
+        "land in the same year.\n\n"
+        "The goal is honest decision support: see the range and the tail, not a false precise number."
+    )
 
 st.caption(
     "Modeled planning estimates in USD. Lifespans lean on the RVC VetCompass 2024 life "
