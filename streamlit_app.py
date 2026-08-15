@@ -196,8 +196,9 @@ st.markdown(
 # Load reference data.
 # ---------------------------------------------------------------------------
 try:
-    breeds_df = q(f"SELECT breed_name, size, lifespan_median FROM {DB}.breeds ORDER BY breed_name")
-    summary_all = q(f"SELECT * FROM {DB}.breed_cost_summary")
+    with st.spinner("Warming up the Snowflake warehouse and loading breeds…"):
+        breeds_df = q(f"SELECT breed_name, size, lifespan_median FROM {DB}.breeds ORDER BY breed_name")
+        summary_all = q(f"SELECT * FROM {DB}.breed_cost_summary")
 except Exception as e:
     st.title("🐕 What This Dog Actually Costs")
     st.error(
@@ -284,9 +285,6 @@ def scenario_data(breed, adopt, deductible, coins):
     return hist, summ.iloc[0]
 
 
-row = None  # set after controls
-
-
 # ---------------------------------------------------------------------------
 # Hero
 # ---------------------------------------------------------------------------
@@ -309,11 +307,13 @@ st.markdown(
 left, right = st.columns([1, 1])
 with left:
     default_ix = breed_names.index("French Bulldog") if "French Bulldog" in breed_names else 0
-    primary = st.selectbox("Choose a breed", breed_names, index=default_ix)
+    primary = st.selectbox("Choose a breed", breed_names, index=default_ix,
+                           help="Each breed is backed by 10,000 dog-lifetimes simulated in Snowflake.")
 with right:
     compare_defaults = [b for b in ["Border Collie", "Great Dane"] if b in breed_names and b != primary]
     compare = st.multiselect("Compare with (optional)",
-                             [b for b in breed_names if b != primary], default=compare_defaults)
+                             [b for b in breed_names if b != primary], default=compare_defaults,
+                             help="Overlay other breeds to compare their cost distributions.")
 
 selected = [primary] + compare
 row = summary_all[summary_all["breed_name"] == primary].iloc[0]
@@ -383,10 +383,9 @@ with tab_overview:
                  .mark_rule(color=DANGER, size=1).encode(x="t:Q"))
     st.altair_chart(bars + median_rule + tail_rule, use_container_width=True)
     st.markdown(
-        f"<span style='color:{MUTED}'>Dashed line = median ({money(row['median_cost'])}). "
-        f"Everything in <b style='color:{DANGER}'>red</b> is the tail past {money(TAIL)}: "
-        f"<b>{tail_pct*100:.0f}% of {primary}s land there.</b></span>",
-        unsafe_allow_html=True,
+        f"Dashed line marks the median ({money(row['median_cost'])}). "
+        f"Everything in :red[**red**] is the tail past {money(TAIL)}: "
+        f"**{tail_pct * 100:.0f}% of {primary}s land there.**"
     )
     st.divider()
 
@@ -531,12 +530,16 @@ with tab_scenario:
     st.caption("Move the sliders and Snowflake re-runs the numbers across all 10,000 simulated lives.")
 
     sc1, sc2, sc3 = st.columns(3)
-    acq = sc1.radio("Acquisition", ["Buy (breed price)", "Adopt (~$200)"], horizontal=False)
+    acq = sc1.radio("Acquisition", ["Buy (breed price)", "Adopt (~$200)"], horizontal=False,
+                    help="Adopt swaps the breed's purchase price for a flat ~$200 fee.")
     adopt = acq.startswith("Adopt")
-    deductible = sc2.slider("Annual deductible you cover", 0, 1000, 250, 50)
-    coins = sc3.slider("Coinsurance you pay after that (%)", 0, 50, 20, 5) / 100.0
+    deductible = sc2.slider("Annual deductible you cover", 0, 1000, 250, 50,
+                            help="What you pay out of pocket each year before insurance starts covering.")
+    coins = sc3.slider("Coinsurance you pay after that (%)", 0, 50, 20, 5,
+                       help="Your share of the remaining bill after the deductible.") / 100.0
 
-    hist, s = scenario_data(primary, adopt, deductible, coins)
+    with st.spinner("Re-running 10,000 simulated lives in Snowflake…"):
+        hist, s = scenario_data(primary, adopt, deductible, coins)
     med_u, med_i = float(s["med_unins"]), float(s["med_ins"])
     tail_u, tail_i = float(s["tail_unins"]), float(s["tail_ins"])
 
@@ -591,8 +594,8 @@ with tab_scenario:
         vc = MUTED
     if adopt:
         vtxt += " Acquisition is set to **adopt**, so the breed purchase price is swapped for a ~$200 fee."
-    st.markdown(f'<div class="wtdac-verdict" style="border-left:5px solid {vc}">{vtxt}</div>',
-                unsafe_allow_html=True)
+    # Native colored callout (renders markdown reliably; no injected HTML).
+    {SAFE: st.success, AMBER: st.warning, MUTED: st.info}.get(vc, st.info)(vtxt)
     st.caption("A simplified insurance model: flat premium already in the baseline, a yearly deductible, "
                "then coinsurance on the rest. Real policies vary. This is for comparison, not a quote.")
 
