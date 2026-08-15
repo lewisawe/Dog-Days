@@ -1,6 +1,8 @@
 # Local development (run the app against your Snowflake account or the DuckDB mirror).
-streamlit>=1.36
-altair>=5.0
-pandas>=2.0
-snowflake-connector-python[pandas]>=3.7
-duckdb>=1.0
+# Plain connector (no [pandas] extra / pyarrow) so it installs cleanly on
+# Streamlit Community Cloud. The app builds DataFrames from the cursor directly.
+streamlit
+altair
+pandas
+snowflake-connector-python
+duckdb

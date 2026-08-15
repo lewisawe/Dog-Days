@@ -127,7 +127,8 @@ def q(sql: str) -> pd.DataFrame:
     elif kind == "connector":
         cur = handle.cursor()
         cur.execute(sql)
-        df = cur.fetch_pandas_all()
+        cols = [d[0] for d in cur.description]
+        df = pd.DataFrame(cur.fetchall(), columns=cols)
     else:  # duckdb dev mirror: objects are unqualified, so drop the DB prefix
         df = handle.execute(sql.replace(f"{DB}.", "")).fetch_df()
     df.columns = [c.lower() for c in df.columns]
