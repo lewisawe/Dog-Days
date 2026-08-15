@@ -1,7 +1,7 @@
 # What This Dog Actually Costs
 
 Estimate the lifetime cost of owning a dog by breed, shown as a probability
-distribution rather than a single number. The estimates come from a Monte Carlo
+distribution instead of a single number. The estimates come from a Monte Carlo
 simulation of thousands of dog-lifetimes run in Snowflake SQL.
 
 Built for the DEV Weekend Challenge: Dog Days Edition.
@@ -11,8 +11,8 @@ Built for the DEV Weekend Challenge: Dog Days Edition.
 1. Three input tables (breeds, health conditions, breed-condition risk) are loaded
    into Snowflake from CSV.
 2. `sql/03_simulation.sql` simulates 10,000 dog-lifetimes per breed. Each simulated
-   dog draws its own lifespan, accrues year-by-year care costs, and rolls the dice on
-   the health conditions its breed is prone to.
+   dog draws its own lifespan, accrues care costs each year (senior years weighted
+   higher), and rolls the dice on the health conditions its breed is prone to.
 3. The Streamlit app reads the result tables and shows the cost distribution, the
    headline numbers, and the top cost drivers per breed.
 
@@ -35,7 +35,26 @@ tools/
 requirements.txt      local dependencies (also used by Streamlit Community Cloud)
 ```
 
-## Run it
+## How the repo fits together
+
+The data flows in one direction: **data → Snowflake → app.**
+
+- **`data/`** holds the inputs. `generate_data.py` turns documented assumptions into three
+  CSVs (breeds, conditions, and the per-breed risk of each condition). `SOURCES.md` records
+  where every number comes from and what the model simplifies.
+- **`sql/`** is where the work happens. `load_data.py` runs the three SQL files in order:
+  create the schema, load the CSVs, then run the simulation. `03_simulation.sql` is the
+  engine: it fans each breed into 10,000 simulated dogs, draws each dog's lifespan, accrues
+  age-weighted care costs, rolls its breed's health conditions, and rolls everything up into
+  the `sim_results` table and the `breed_cost_summary` / `breed_condition_drivers` views.
+- **`streamlit_app.py`** only reads those Snowflake tables and views. It never does the
+  modeling itself. It picks its backend automatically (active Snowpark session inside
+  Snowflake, the Python connector locally or on Streamlit Cloud), and the insurance and
+  affordability panels fire small parameterized queries so Snowflake recomputes on the fly.
+- **`tools/`** exists to trust the SQL. `verify_model.py` reimplements the same model in plain
+  Python and `build_local_duckdb.py` reimplements it in DuckDB. When all three land on the
+  same medians, the Snowflake simulation is sound. The DuckDB mirror also lets you run the app
+  offline during development.
 
 ### Against your Snowflake account (local)
 
@@ -79,7 +98,9 @@ streamlit run streamlit_app.py
 
 ## A note on the numbers
 
-Every figure is a modeled planning estimate in USD, gross of insurance
-reimbursement. Lifespans lean on the RVC VetCompass 2024 life tables; costs use US
-insurer and veterinary ranges. See `data/SOURCES.md`. This is decision support, not a
-quote.
+Every figure is a modeled planning estimate in USD, shown as an **uninsured,
+pay-as-you-go** cost. Insurance is not baked into the headline (that would double-count
+premiums against out-of-pocket bills); it is modeled separately in the app's scenario
+tab. Routine care is age-weighted, with senior years costing more. Lifespans lean on the
+RVC VetCompass 2024 life tables; costs use US insurer and veterinary ranges. See
+`data/SOURCES.md`. This is decision support, not a quote.
