@@ -56,7 +56,7 @@ SELECT
     b.breed_name,
     row_number() OVER (PARTITION BY b.breed_name ORDER BY random()) AS sim_id,
     greatest(1, least(20, round(b.lifespan_median + b.lifespan_sd * {NORMAL}))) AS lifespan_years,
-    (b.annual_food + b.annual_routine_vet + b.annual_preventatives + b.annual_insurance) AS annual_baseline,
+    (b.annual_food + b.annual_routine_vet + b.annual_preventatives) AS annual_baseline,
     b.puppy_setup, b.purchase_price
 FROM breeds b
 CROSS JOIN range({N}) g
@@ -90,13 +90,24 @@ CREATE TABLE sim_results AS
 WITH health AS (
     SELECT breed_name, sim_id, SUM(cost) AS health_cost
     FROM sim_condition_costs GROUP BY breed_name, sim_id
+),
+base AS (
+    SELECT d.breed_name, d.sim_id, d.lifespan_years,
+           least(3, d.lifespan_years) AS senior_yrs,
+           d.annual_baseline, d.puppy_setup, d.purchase_price
+    FROM sim_dogs d
 )
-SELECT d.breed_name, d.sim_id, d.lifespan_years,
-    d.annual_baseline * d.lifespan_years + d.puppy_setup + d.purchase_price AS baseline_cost,
+SELECT base.breed_name, base.sim_id, base.lifespan_years,
+    round(base.annual_baseline * (base.lifespan_years - base.senior_yrs)
+          + base.annual_baseline * 1.4 * base.senior_yrs
+          + base.puppy_setup + base.purchase_price) AS baseline_cost,
     COALESCE(h.health_cost, 0) AS health_cost,
-    d.annual_baseline * d.lifespan_years + d.puppy_setup + d.purchase_price + COALESCE(h.health_cost, 0) AS lifetime_cost
-FROM sim_dogs d
-LEFT JOIN health h ON h.breed_name = d.breed_name AND h.sim_id = d.sim_id
+    round(base.annual_baseline * (base.lifespan_years - base.senior_yrs)
+          + base.annual_baseline * 1.4 * base.senior_yrs
+          + base.puppy_setup + base.purchase_price
+          + COALESCE(h.health_cost, 0)) AS lifetime_cost
+FROM base
+LEFT JOIN health h ON h.breed_name = base.breed_name AND h.sim_id = base.sim_id
 """)
 
 # ---- summary + drivers views ----------------------------------------------

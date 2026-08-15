@@ -35,7 +35,10 @@ For each breed we run a Monte Carlo simulation **in Snowflake SQL** (`sql/03_sim
 Each simulated dog:
 
 1. Draws a lifespan from a normal distribution around the breed median (clamped to a sane range).
-2. Accrues baseline annual costs (food + routine vet + preventatives + insurance) for each year of life.
+2. Accrues baseline annual care costs (food + routine vet + preventatives). Care is age-weighted:
+   the last up to three years of life cost 40% more, reflecting higher senior vet and medication
+   needs. Insurance is deliberately excluded here so the headline is an uninsured, pay-as-you-go
+   figure; insurance is modeled separately in the app's scenario lab.
 3. Adds a one-time first-year setup cost and the breed's typical acquisition price.
 4. For each condition the breed is at risk of, rolls against the lifetime probability. If it hits:
    - **one-time** conditions add a treatment cost sampled around the average, if the dog lives to the onset age.
@@ -51,8 +54,12 @@ nobody budgets for.
   varies with breeding lines, screening, diet, and luck.
 - Costs are US-centric and vary widely by region and clinic.
 - We model the common predispositions per breed, not every possible condition.
-- Insurance is modeled as a flat annual premium; we do not model reimbursement offsetting
-  treatment costs (so totals represent gross spend, which is the conservative planning view).
+- The headline cost is uninsured and pay-as-you-go. The scenario lab models insurance as a flat
+  premium plus a deductible and coinsurance, a simplified policy for comparison, not a quote.
+- Within a life stage, care cost is flat; we approximate the senior increase as a 40% surcharge
+  on the last up to three years rather than a smooth per-year curve.
+- A dog's lifespan is drawn independently of the conditions it develops; we do not model a fatal
+  condition shortening life.
 
 The goal is decision support before adoption: see the range, understand the tail, adopt with
 eyes open.

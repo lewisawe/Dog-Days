@@ -246,18 +246,18 @@ def scenario_data(breed, adopt, deductible, coins):
     """Live parameterized query: per-sim cost under Uninsured vs With-insurance,
     with an optional adoption acquisition swap. Returns (histogram_df, summary_df).
 
-    Uninsured  = baseline (minus the insurance premium) + full treatment cost.
-    Insured    = baseline (keeps premium) + deductible + coinsurance of the rest.
-    Adopt swap = replace the breed purchase price with a flat adoption fee.
+    Baseline (routine care + setup + acquisition, insurance NOT included) comes from
+    sim_results. Uninsured = baseline + full treatment. Insured = baseline + premiums
+    + deductible + coinsurance of the rest.
     """
     b = sql_str(breed)
     acq = f"({ADOPT_FEE} - bd.purchase_price)" if adopt else "0"
     scen_cte = f"""
         WITH scen AS (
             SELECT
-                sr.baseline_cost - bd.annual_insurance * sr.lifespan_years
-                    + sr.health_cost + {acq} AS uninsured,
+                sr.baseline_cost + sr.health_cost + {acq} AS uninsured,
                 sr.baseline_cost
+                    + bd.annual_insurance * sr.lifespan_years
                     + LEAST(sr.health_cost, {deductible})
                     + {coins} * GREATEST(0, sr.health_cost - {deductible})
                     + {acq} AS insured
@@ -324,8 +324,9 @@ emoji = SIZE_EMOJI.get(psize, "🐶")
 tail_pct = float(row["prob_over_40k"])
 _pyr = float(row["median_cost_per_year"])
 _pyr_hi = float(summary_all["median_cost_per_year"].quantile(0.66))
+_tail_hi = float(summary_all["prob_over_40k"].quantile(0.75))
 _tail_lo = float(summary_all["prob_over_40k"].quantile(0.33))
-if tail_pct >= 0.30:
+if tail_pct >= _tail_hi:
     _label, _color, _why = "High-risk tail", DANGER, "a real chance of a very expensive dog"
 elif _pyr >= _pyr_hi:
     _label, _color, _why = "Expensive to run", AMBER, "high steady year-to-year cost"
@@ -754,12 +755,12 @@ with st.expander("About the model and its limits"):
         "documented averages.\n"
         "- **Condition risk** per breed comes from published predisposition data, rounded to "
         "planning-grade probabilities.\n"
-        "- **Simplifications, on purpose:** yearly care is modeled roughly flat (real senior years "
-        "cost more), each condition is rolled independently, and a dog's lifespan is drawn "
-        "independently of the illnesses it develops.\n"
-        "- **The insurance and affordability views** are simplified comparison models, not quotes. "
-        "The worst-year figure conservatively assumes a big one-time bill and chronic costs can "
-        "land in the same year.\n\n"
+        "- **Simplifications, on purpose:** routine care is age-weighted (the last up to 3 senior "
+        "years cost ~40% more), but within a stage it is flat; each condition is rolled "
+        "independently; and a dog's lifespan is drawn independently of the illnesses it develops.\n"
+        "- **The headline is uninsured, pay-as-you-go.** Insurance is modeled only in the scenario "
+        "tab so you can weigh it. The affordability worst-year figure conservatively assumes a big "
+        "one-time bill and chronic costs can land in the same year. None of this is a quote.\n\n"
         "The goal is honest decision support: see the range and the tail, not a false precise number."
     )
 

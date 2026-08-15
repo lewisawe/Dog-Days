@@ -34,13 +34,15 @@ def effective_risk(breed, risk):
 def simulate(breed, breeds, conditions, risk):
     b = breeds[breed]
     median = float(b["lifespan_median"]); sd = float(b["lifespan_sd"])
-    annual = sum(int(b[k]) for k in ("annual_food","annual_routine_vet","annual_preventatives","annual_insurance"))
+    # routine care only (no insurance); insurance is a scenario choice, not in the headline
+    annual = sum(int(b[k]) for k in ("annual_food", "annual_routine_vet", "annual_preventatives"))
     setup = int(b["puppy_setup"]); price = int(b["purchase_price"])
     eff = effective_risk(breed, risk)
     totals, drivers = [], {c: [0, 0.0] for c in eff}  # cond -> [hits, cost_sum]
     for _ in range(N):
         life = max(1, min(20, round(random.gauss(median, sd))))
-        cost = annual * life + setup + price
+        senior = min(3, life)  # last up to 3 years cost 40% more (senior care)
+        cost = annual * (life - senior) + annual * 1.4 * senior + setup + price
         for cond, prob in eff.items():
             c = conditions[cond]
             onset = int(c["onset_age"])
@@ -51,7 +53,7 @@ def simulate(breed, breeds, conditions, risk):
                     add = int(c["avg_cost"]) + int(c["annual_cost"]) * max(0, life - onset)
                 cost += add
                 drivers[cond][0] += 1; drivers[cond][1] += add
-        totals.append(cost)
+        totals.append(round(cost))
     totals.sort()
     pct = lambda p: totals[min(len(totals)-1, int(p*len(totals)))]
     top = sorted(((c, v[0]/N, (v[1]/v[0] if v[0] else 0)) for c, v in drivers.items()),

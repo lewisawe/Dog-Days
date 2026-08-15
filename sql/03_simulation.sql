@@ -50,7 +50,9 @@ SELECT
     b.breed_name,
     ROW_NUMBER() OVER (PARTITION BY b.breed_name ORDER BY RANDOM()) AS sim_id,
     GREATEST(1, LEAST(20, ROUND(b.lifespan_median + b.lifespan_sd * NORMAL(0, 1, RANDOM())))) AS lifespan_years,
-    (b.annual_food + b.annual_routine_vet + b.annual_preventatives + b.annual_insurance) AS annual_baseline,
+    -- routine care only: food + vet + preventatives. Insurance is NOT here; it is a
+    -- choice modeled in the app's scenario lab, so the headline is uninsured pay-as-you-go.
+    (b.annual_food + b.annual_routine_vet + b.annual_preventatives) AS annual_baseline,
     b.puppy_setup,
     b.purchase_price
 FROM breeds b
@@ -100,25 +102,42 @@ SELECT
 FROM rolled;
 
 -- ---------------------------------------------------------------------------
--- Step 3: total lifetime cost per simulated dog = baseline over its lifespan +
--- setup + acquisition + summed health costs.
+-- Step 3: total lifetime cost per simulated dog. Routine care is age-weighted:
+-- the last up to 3 years of life (senior years) cost 40% more, reflecting higher
+-- vet and medication needs late in life. Then add one-time setup, acquisition,
+-- and the summed health costs. Insurance is not included here (uninsured view).
 -- ---------------------------------------------------------------------------
 CREATE OR REPLACE TABLE sim_results AS
 WITH health AS (
     SELECT breed_name, sim_id, SUM(cost) AS health_cost
     FROM sim_condition_costs
     GROUP BY breed_name, sim_id
+),
+base AS (
+    SELECT
+        d.breed_name,
+        d.sim_id,
+        d.lifespan_years,
+        LEAST(3, d.lifespan_years) AS senior_yrs,
+        d.annual_baseline,
+        d.puppy_setup,
+        d.purchase_price
+    FROM sim_dogs d
 )
 SELECT
-    d.breed_name,
-    d.sim_id,
-    d.lifespan_years,
-    d.annual_baseline * d.lifespan_years + d.puppy_setup + d.purchase_price AS baseline_cost,
+    base.breed_name,
+    base.sim_id,
+    base.lifespan_years,
+    ROUND(base.annual_baseline * (base.lifespan_years - base.senior_yrs)
+          + base.annual_baseline * 1.4 * base.senior_yrs
+          + base.puppy_setup + base.purchase_price) AS baseline_cost,
     COALESCE(h.health_cost, 0) AS health_cost,
-    (d.annual_baseline * d.lifespan_years + d.puppy_setup + d.purchase_price)
-        + COALESCE(h.health_cost, 0) AS lifetime_cost
-FROM sim_dogs d
-LEFT JOIN health h ON h.breed_name = d.breed_name AND h.sim_id = d.sim_id;
+    ROUND(base.annual_baseline * (base.lifespan_years - base.senior_yrs)
+          + base.annual_baseline * 1.4 * base.senior_yrs
+          + base.puppy_setup + base.purchase_price
+          + COALESCE(h.health_cost, 0)) AS lifetime_cost
+FROM base
+LEFT JOIN health h ON h.breed_name = base.breed_name AND h.sim_id = base.sim_id;
 
 -- ---------------------------------------------------------------------------
 -- Summary view: the headline numbers per breed. Median, best/worst deciles,
