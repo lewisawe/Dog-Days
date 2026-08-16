@@ -14,7 +14,10 @@ Built for the DEV Weekend Challenge: Dog Days Edition.
    dog draws its own lifespan, accrues care costs each year (senior years weighted
    higher), and rolls the dice on the health conditions its breed is prone to.
 3. The Streamlit app reads the result tables and shows the cost distribution, the
-   headline numbers, and the top cost drivers per breed.
+   headline numbers, and the top cost drivers per breed. It also narrates individual
+   simulated lives (three percentile lives plus a random "roll a life"), stress-tests a
+   budget against every dog's worst year, and runs a live insurance-and-adoption scenario
+   lab that re-queries Snowflake on each slider move. A leaderboard ranks all 30 breeds.
 
 ## Project layout
 

@@ -11,6 +11,7 @@ Runs in two environments with no code changes:
              (SNOWFLAKE_ACCOUNT / USER / PASSWORD / [WAREHOUSE] / [ROLE]).
 """
 import os
+import time
 import altair as alt
 import pandas as pd
 import streamlit as st
@@ -150,6 +151,13 @@ def sql_str(s) -> str:
     return "'" + str(s).replace("'", "''") + "'"
 
 
+def backend_name() -> str:
+    """Human-readable name of the active compute backend, so captions stay honest:
+    Snowflake in production (SiS / connector), the DuckDB mirror in local dev."""
+    kind, _ = get_conn()
+    return "Snowflake" if kind in ("snowpark", "connector") else "the local DuckDB mirror"
+
+
 # ---------------------------------------------------------------------------
 # Theme / CSS (scoped classes, robust across Streamlit versions incl. SiS).
 # ---------------------------------------------------------------------------
@@ -266,6 +274,7 @@ def scenario_data(breed, adopt, deductible, coins):
             WHERE sr.breed_name = {b}
         )
     """
+    t0 = time.perf_counter()
     hist = q(scen_cte + """
         SELECT scenario, bucket, COUNT(*) AS n FROM (
             SELECT 'Uninsured' AS scenario, CAST(FLOOR(uninsured / 2000) AS INT) AS bucket FROM scen
@@ -282,7 +291,8 @@ def scenario_data(breed, adopt, deductible, coins):
                MAX(uninsured) AS max_unins, MAX(insured) AS max_ins
         FROM scen
     """)
-    return hist, summ.iloc[0]
+    elapsed_ms = (time.perf_counter() - t0) * 1000
+    return hist, summ.iloc[0], elapsed_ms
 
 
 # ---------------------------------------------------------------------------
@@ -636,7 +646,7 @@ with tab_scenario:
                        help="Your share of the remaining bill after the deductible.") / 100.0
 
     with st.spinner("Re-running 10,000 simulated lives in Snowflake…"):
-        hist, s = scenario_data(primary, adopt, deductible, coins)
+        hist, s, elapsed_ms = scenario_data(primary, adopt, deductible, coins)
     med_u, med_i = float(s["med_unins"]), float(s["med_ins"])
     tail_u, tail_i = float(s["tail_unins"]), float(s["tail_ins"])
 
@@ -670,6 +680,8 @@ with tab_scenario:
                 scale=alt.Scale(domain=["Uninsured", "With insurance"], range=[DANGER, SAFE])))
     )
     st.altair_chart(overlay + rules, use_container_width=True)
+    st.caption(f"⚡ {backend_name()} recomputed all 10,000 simulated lives for these settings "
+               f"in {elapsed_ms:,.0f} ms. Every slider move fires a fresh parameterized query.")
 
     # Data-driven verdict
     med_delta = med_i - med_u
